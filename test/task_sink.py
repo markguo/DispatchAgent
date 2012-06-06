@@ -28,13 +28,13 @@ receiver.recv()
 tstart = time.time()
 
 # Process 100 confirmiations
-for task_nbr in xrange(100):
-	receiver.recv()
-	if task_nbr % 10 == 0:
-		sys.stdout.write(":")
-	else:
-		sys.stdout.write(".")
-	sys.stdout.flush()
+for task_nbr in xrange(10):
+    receiver.recv()
+    if task_nbr % 5 == 0:
+	sys.stdout.write(":")
+    else:
+	sys.stdout.write(".")
+    sys.stdout.flush()
 
 # Calculate and report duration of batch
 tend = time.time()

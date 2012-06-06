@@ -1,5 +1,7 @@
 #!/bin/env python
+# encoding: utf-8
 # Task ventilator
+
 # Binds PUSH socket to tcp://localhost:5557
 # Sends batch of tasks to workers via that socket
 #
@@ -31,7 +33,7 @@ random.seed()
 
 # Send 100 tasks
 total_msec = 0
-for task_nbr in range(100):
+for task_nbr in range(10):
     # Random workload from 1 to 100 msecs
     workload = random.randint(1, 100)
     total_msec += workload
