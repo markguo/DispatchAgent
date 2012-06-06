@@ -1,4 +1,5 @@
 #!/bin/env python
+#encoding: GBK
 
 import sys
 import time
@@ -32,6 +33,30 @@ def asUpStream():
     poller.register(receiver, zmq.POLLIN)
     poller.register(file_server, zmq.POLLIN)
 
+    def RunBl5mTask():
+	''' 任务启动
+	'''
+	controller.send("CMD_START_TASK")
+
+    def RunControllerLocalTask():
+	'''
+	中控本地任务启动
+	中控本地任务执行进度汇报
+	中控本地任务完成
+	'''
+	print '''中控本地任务启动
+	中控本地任务执行进度汇报
+	中控本地任务完成
+	'''
+
+    def StartTransferBlackListRule():
+	'''
+	启动中间数据分发
+	各结点汇报分发进度
+	各结点验证数据
+	'''
+	controller.send("PULL_FILE %s" % '/home/guoshiwei/start-proxy-gfw.sh')
+
     while True:
 	socks = dict(poller.poll())
 	if socks.get(receiver) == zmq.POLLIN:
@@ -39,12 +64,14 @@ def asUpStream():
 	    print "RECV: " + received_msg
 	    if received_msg == 'STEP 9 DONE':
 		controller.send("CMD_KILL")
-	    elif received_msg == 'STEP 7 DONE':
-		controller.send("PULL_FILE %s" % '/home/guoshiwei/start-proxy-gfw.sh')
+	    elif received_msg == 'STEP 1 DONE':
+		RunControllerLocalTask()
+		StartTransferBlackListRule()
 	    elif received_msg.startswith('REGISTOR'):
 		param = received_msg[8:]
 		print 'REGISTOR recived:', param
-		controller.send("CMD_START_TASK")
+		RunBl5mTask()
+
 	elif socks.get(file_server) == zmq.POLLIN:
 	    # Set up a return container
 	    ret = {}
@@ -82,6 +109,31 @@ def asDownStream():
     file_client = context.socket(zmq.REQ)
     file_client.connect('tcp://localhost:%s' % FILE_SERVER_PORT)
     # Process messages from both sockets
+    def RunSubNodeLocalTask():
+	'''
+	各结点本地任务启动
+	各结点本地任务进度汇报
+	各结点本地任务完成
+	'''
+	sender.send("SubNodeLocalTask START")
+	time.sleep(1)
+	sender.send("SubNodeLocalTask complete 50%")
+	time.sleep(1)
+	sender.send("SubNodeLocalTask complete 100%")
+
+    def StartL3NodeFileTransfer():
+	'''
+	各结点开始二级分发
+	三级结点传输和进度汇报
+	三级结点传输完成，检验数据
+	任务结束 
+	'''
+	sender.send("L3NodeFileTransfer to online_lquery001 START")
+	time.sleep(1)
+	sender.send("L3NodeFileTransfer to online_lquery001 50%")
+	time.sleep(1)
+	sender.send("L3NodeFileTransfer to online_lquery001 100%")
+
     while True:
 	socks = dict(poller.poll())
 
@@ -116,7 +168,9 @@ def asDownStream():
 		    else:
 			break 
 
+		RunSubNodeLocalTask()
 		sender.send("STEP 8 DONE")
+		StartL3NodeFileTransfer()
 		sender.send("STEP 9 DONE")
 	    else:
 		print "Uknow CMD: %s"
